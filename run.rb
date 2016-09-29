@@ -1,10 +1,12 @@
 require 'bundler'
 Bundler.require
 
+# ログはファイルに吐け
 $stdin = File.open 'log/all', 'a'
 $stderr = File.open 'log/all', 'a'
 
-at_exit { #終了したらエラー
+#終了したらエラー
+at_exit { 
   raiseError 'daemon has stopped'
   File.open 'log/all', 'a' do |f|
     puts "[#{Time.now}]: Process has stopped."
@@ -14,7 +16,9 @@ at_exit { #終了したらエラー
 
 
 def main
-  @stream.user({}) do |event|
+  setup
+  
+  @stream.user do |event|
     next unless event.is_a? Twitter::Tweet
     next if event.user_mentions?
     
@@ -23,6 +27,11 @@ def main
 end
 
 def setup
+  File.open 'log/all', 'a' do |f|
+    puts "========="
+    puts "[#{Time.now}]: Process start running."
+  end
+  
   prof = YAML.load_file 'prof.yaml'
   @stream  = Twitter::Streaming::Client.new do |config|
     config.consumer_key        = prof['cred']['consumer']['key']
@@ -39,8 +48,8 @@ def setup
   end
 end
 
-def send_fav
-  res = @rest.favorite!
+def send_fav event
+  res = @rest.favorite! event
   
   raiseError 'auth error happend' if res.is_a? Twitter::Error::Unauthorized
 end
@@ -50,3 +59,5 @@ def raiseError mes #エラー処理
     puts "[#{Time.now}]: #{mes}"
   end
 end
+
+main
