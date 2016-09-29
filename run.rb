@@ -9,8 +9,8 @@ $stderr = File.open 'log/all', 'a'
 at_exit { 
   raiseError 'daemon has stopped'
   File.open 'log/all', 'a' do |f|
-    puts "[#{Time.now}]: Process has stopped."
-    puts "========="
+    f.puts "[#{Time.now}]: Process has stopped."
+    f.puts "========="
   end
 }
 
@@ -22,7 +22,10 @@ def main
     next unless event.is_a? Twitter::Tweet
     next if event.user_mentions?
     
-    send_fav event if event.full_text.include? 'ゆかり'
+    if event.full_text.include? 'ゆかり'
+      next unless filter event
+      send_fav event
+    end
   end
 end
 
@@ -48,6 +51,23 @@ def setup
   end
 end
 
+def filter event
+  except_word = ['定期', '生放送']
+  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot']
+  
+  text = event.full_text
+  except_word.each do |w|
+    return false if text.include? w
+  end
+  
+  user = event.user.screen_name
+  except_user.each do |u|
+    return false if user.include? u
+  end
+  
+  return true
+end
+
 def send_fav event
   res = @rest.favorite! event
   
@@ -56,7 +76,7 @@ end
 
 def raiseError mes #エラー処理
   File.open 'log/err', 'a' do |f|
-    puts "[#{Time.now}]: #{mes}"
+    f.puts "[#{Time.now}]: #{mes}"
   end
 end
 
