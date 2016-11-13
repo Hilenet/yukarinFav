@@ -49,11 +49,20 @@ def setup
     config.access_token        = prof['cred']['access_token']['key']
     config.access_token_secret = prof['cred']['access_token']['secret']
   end
+
+  @dic = {}
+  File.open 'dic/pn_ja.dic', 'r' do |f|
+    f.each_line do |line|
+     units = line.split ":"
+     @dic[units[0]] = units[3].to_f
+   end
+  end
+  @parser = Natto::MeCab.new 
 end
 
 def filter event
-  except_word = ['定期', '生放送']
-  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot']
+  except_word = ['殺', '死', '嫌', '定期', '生放送', '田村', '水本', 'たむら', '八雲', 'やくも', 'うつろき']
+  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot', 'Miyabi_holy']
   
   text = event.full_text
   except_word.each do |w|
@@ -65,6 +74,18 @@ def filter event
     return false if user.include? u
   end
   
+  score = 0
+  @parser.parse(text).each_line do |node|
+    w = node.split(",")[6]
+    score += @dic[w] if @dic[w]
+  end
+  if score < 0
+    File.open 'log/negatives', 'a' do |f|
+      f.puts "#{Time.now}: #{event.user.name}/#{score}\n#{text}\n=====\n"
+    end
+    return false
+  end
+
   return true
 end
 
