@@ -61,8 +61,8 @@ def setup
 end
 
 def filter event
-  except_word = ['殺', '死', '嫌', '定期', '生放送', '田村', '水本', 'たむら', '八雲', 'やくも', 'うつろき']
-  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot', 'Miyabi_holy']
+  except_word = ['殺', '死', '嫌', '定期', '生放送', '田村', '水本', 'たむら', '八雲', 'やくも', 'うつろき', 'マイリスト', 'ニコ']
+  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot', 'Miyabi_holy', 'kanidiru', 'Cb69762530', 'taityo0623', 'teru_AC52', 'gurafa']
   
   text = event.full_text
   except_word.each do |w|
