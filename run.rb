@@ -92,9 +92,11 @@ end
 
 # favる
 def send_fav event
-  res = @rest.favorite! event
-  
-  raiseError 'auth error happend' if res.is_a? Twitter::Error::Unauthorized
+  Thread.new do
+    sleep Random.rand(60)
+    res = @rest.favorite! event
+    raiseError 'auth error happend' if res.is_a? Twitter::Error::Unauthorized
+  end
 end
 
 def raiseError mes #エラー処理
