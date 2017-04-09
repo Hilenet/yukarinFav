@@ -29,25 +29,28 @@ def main
   end
 end
 
+# APIクライアントとパーサの設定
 def setup
   File.open 'log/all', 'a' do |f|
     puts "========="
     puts "[#{Time.now}]: Process start running."
   end
   
-  prof = YAML.load_file 'prof.yaml'
+  prof = YAML.load_file('prof.yaml')
+  cred = prof['cred']
+  @except = prof['except']
   @stream  = Twitter::Streaming::Client.new do |config|
-    config.consumer_key        = prof['cred']['consumer']['key']
-    config.consumer_secret     = prof['cred']['consumer']['secret']
-    config.access_token        = prof['cred']['access_token']['key']
-    config.access_token_secret = prof['cred']['access_token']['secret']
+    config.consumer_key        = cred['consumer']['key']
+    config.consumer_secret     = cred['consumer']['secret']
+    config.access_token        = cred['access_token']['key']
+    config.access_token_secret = cred['access_token']['secret']
   end
   
   @rest = Twitter::REST::Client.new do |config|
-    config.consumer_key        = prof['cred']['consumer']['key']
-    config.consumer_secret     = prof['cred']['consumer']['secret']
-    config.access_token        = prof['cred']['access_token']['key']
-    config.access_token_secret = prof['cred']['access_token']['secret']
+    config.consumer_key        = cred['consumer']['key']
+    config.consumer_secret     = cred['consumer']['secret']
+    config.access_token        = cred['access_token']['key']
+    config.access_token_secret = cred['access_token']['secret']
   end
 
   @dic = {}
@@ -60,17 +63,15 @@ def setup
   @parser = Natto::MeCab.new 
 end
 
+# パースしてexcept系から判断
 def filter event
-  except_word = ['殺', '死', '嫌', '定期', '生放送', '田村', '水本', 'たむら', '八雲', 'やくも', 'うつろき', 'マイリスト', 'ニコ']
-  except_user = ['yandere_yuduki', 'yukaridyy_bot', 'yukari_new_bot', 'Miyabi_holy', 'kanidiru', 'Cb69762530', 'taityo0623', 'teru_AC52', 'gurafa']
-  
   text = event.full_text
-  except_word.each do |w|
+  @except['word'].each do |w|
     return false if text.include? w
   end
   
   user = event.user.screen_name
-  except_user.each do |u|
+  @except['user'].each do |u|
     return false if user.include? u
   end
   
@@ -89,6 +90,7 @@ def filter event
   return true
 end
 
+# favる
 def send_fav event
   res = @rest.favorite! event
   
